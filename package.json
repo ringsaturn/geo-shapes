@@ -1,0 +1,26 @@
+{
+  "name": "geo-shapes",
+  "version": "1.0.0",
+  "description": "Utility functions for points and polygons",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darkskyapp/geo-shapes.git"
+  },
+  "keywords": [
+    "polygon",
+    "point",
+    "GIS",
+    "maps",
+    "cartography"
+  ],
+  "author": "Dark Sky Company",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/darkskyapp/geo-shapes/issues"
+  },
+  "homepage": "https://github.com/darkskyapp/geo-shapes#readme"
+}
