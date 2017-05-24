@@ -1,16 +1,18 @@
 {
   "name": "geo-shapes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Utility functions for points and polygons",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "jshint . --exclude node_modules",
+    "test": "NODE_ENV=test istanbul cover _mocha -- $ARGS"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/darkskyapp/geo-shapes.git"
   },
   "keywords": [
+    "shape",
     "polygon",
     "point",
     "GIS",
@@ -22,5 +24,38 @@
   "bugs": {
     "url": "https://github.com/darkskyapp/geo-shapes/issues"
   },
-  "homepage": "https://github.com/darkskyapp/geo-shapes#readme"
+  "homepage": "https://github.com/darkskyapp/geo-shapes#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
+    "jshint": "^2.9.4",
+    "mocha": "^3.4.2"
+  },
+  "jshintConfig": {
+    "esnext": true,
+    "curly": true,
+    "eqeqeq": true,
+    "forin": true,
+    "freeze": true,
+    "immed": true,
+    "indent": 2,
+    "latedef": true,
+    "maxlen": 79,
+    "mocha": true,
+    "newcap": true,
+    "noarg": true,
+    "node": true,
+    "noempty": true,
+    "nonbsp": true,
+    "nonew": true,
+    "predef": [
+      "-Promise"
+    ],
+    "quotmark": "double",
+    "sub": true,
+    "strict": true,
+    "undef": true,
+    "unused": "vars",
+    "varstmt": true
+  }
 }
