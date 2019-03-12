@@ -148,7 +148,7 @@ describe("geo-shapes", () => {
   describe("distance", () => {
     it("should return the distance between Nashville and LA", () => {
       expect(geoshapes.distance(36.12, -86.67, 33.94, -118.4)).
-        to.be.closeTo(2886448, 1);
+        to.be.closeTo(2860000, 26481);
     });
 
     it("should return the distance between the north + south pole", () => {

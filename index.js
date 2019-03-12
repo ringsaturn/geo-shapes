@@ -1,5 +1,7 @@
 "use strict";
+const DEGREES = 180 / Math.PI;
 const EARTH_RADIUS = 6371008.8;
+const RADIANS = Math.PI / 180;
 
 function centroid(a) {
   /* Optimization: the centroid of a point is, well, a point; so simply return
@@ -129,25 +131,25 @@ function overlaps_any(a, bs) {
 /* distance + bearing below are sourced from
  * http://www.movable-type.co.uk/scripts/latlong.html */
 function bearing(lat1, lon1, lat2, lon2) {
-  lat1 *= Math.PI / 180.0;
-  lon1 *= Math.PI / 180.0;
-  lat2 *= Math.PI / 180.0;
-  lon2 *= Math.PI / 180.0;
+  lat1 *= RADIANS;
+  lon1 *= RADIANS;
+  lat2 *= RADIANS;
+  lon2 *= RADIANS;
 
   const dLon = lon2 - lon1;
 
   return (Math.atan2(
     Math.sin(dLon) * Math.cos(lat2),
     Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
-  ) * (180.0 / Math.PI) + 360.0) % 360.0;
+      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
+  ) * DEGREES + 360.0) % 360.0;
 }
 
 function distance(lat_1, lon_1, lat_2, lon_2) {
-  lat_1 *= Math.PI / 180.0;
-  lon_1 *= Math.PI / 180.0;
-  lat_2 *= Math.PI / 180.0;
-  lon_2 *= Math.PI / 180.0;
+  lat_1 *= RADIANS;
+  lon_1 *= RADIANS;
+  lat_2 *= RADIANS;
+  lon_2 *= RADIANS;
 
   const dLon = lon_2 - lon_1;
   const sinDLon = Math.sin(dLon);
@@ -160,7 +162,7 @@ function distance(lat_1, lon_1, lat_2, lon_2) {
   const b = cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosDLon;
 
   return EARTH_RADIUS * Math.atan2(
-    Math.sqrt(a * a + b * b),
+    Math.hypot(a, b),
     sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosDLon
   );
 }
