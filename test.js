@@ -1,6 +1,6 @@
 "use strict";
-const expect     = require("chai").expect,
-      geoshapes = require("./index");
+const expect     = require("chai").expect;
+const geoshapes  = require("./index");
 
 describe("geo-shapes", () => {
   describe("overlaps", () => {
@@ -149,6 +149,24 @@ describe("geo-shapes", () => {
     it("should return the distance between Nashville and LA", () => {
       expect(geoshapes.distance(36.12, -86.67, 33.94, -118.4)).
         to.be.closeTo(2886448, 1);
+    });
+
+    it("should return the distance between the north + south pole", () => {
+      expect(geoshapes.distance(90, 0, -90, 0)).
+        to.be.closeTo(20015114, 1);
+      expect(geoshapes.distance(0, 0, 0, 180.0)).
+        to.be.closeTo(20015114, 1);
+    });
+  });
+  describe("bearing", function() {
+    it("should give a bearing of ~60 degrees from Baghdad to Osaka", () => {
+      expect(geoshapes.bearing(35.0, 45.0, 35.0, 135.0)).
+        to.be.closeTo(60.0, 1);
+    });
+
+    it("should give a bearing of ~300 degrees from Osaka to Baghdad", () => {
+      expect(geoshapes.bearing(35.0, 135.0, 35.0, 45.0)).
+      to.be.closeTo(300.0, 1);
     });
   });
 });
