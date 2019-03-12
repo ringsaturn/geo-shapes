@@ -1,5 +1,7 @@
 "use strict";
+const DEGREES = 180 / Math.PI;
 const EARTH_RADIUS = 6371008.8;
+const RADIANS = Math.PI / 180;
 
 function centroid(a) {
   /* Optimization: the centroid of a point is, well, a point; so simply return
@@ -126,17 +128,43 @@ function overlaps_any(a, bs) {
   return false;
 }
 
-/* This is the haversine distance formula. It is ill-conditioned for
- * antipodal points, so be aware of that limitation before using. */
+/* distance + bearing below are sourced from
+ * http://www.movable-type.co.uk/scripts/latlong.html */
+function bearing(lat1, lon1, lat2, lon2) {
+  lat1 *= RADIANS;
+  lon1 *= RADIANS;
+  lat2 *= RADIANS;
+  lon2 *= RADIANS;
+
+  const dLon = lon2 - lon1;
+
+  return (Math.atan2(
+    Math.sin(dLon) * Math.cos(lat2),
+    Math.cos(lat1) * Math.sin(lat2) -
+      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
+  ) * DEGREES + 360.0) % 360.0;
+}
+
 function distance(lat_1, lon_1, lat_2, lon_2) {
-  return Math.asin(
-    Math.sqrt(
-      (1 - Math.cos((lat_2 - lat_1) * (Math.PI / 180))) +
-        Math.cos(lat_1 * (Math.PI / 180)) *
-        Math.cos(lat_2 * (Math.PI / 180)) *
-        (1 - Math.cos((lon_2 - lon_1) * (Math.PI / 180)))
-    ) * Math.SQRT1_2
-  ) * (EARTH_RADIUS * 2);
+  lat_1 *= RADIANS;
+  lon_1 *= RADIANS;
+  lat_2 *= RADIANS;
+  lon_2 *= RADIANS;
+
+  const dLon = lon_2 - lon_1;
+  const sinDLon = Math.sin(dLon);
+  const cosDLon = Math.cos(dLon);
+  const sinLat1 = Math.sin(lat_1);
+  const cosLat1 = Math.cos(lat_1);
+  const sinLat2 = Math.sin(lat_2);
+  const cosLat2 = Math.cos(lat_2);
+  const a = cosLat2 * sinDLon;
+  const b = cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosDLon;
+
+  return EARTH_RADIUS * Math.atan2(
+    Math.hypot(a, b),
+    sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosDLon
+  );
 }
 
 function distance_any(a, bs) {
@@ -156,5 +184,6 @@ exports.EARTH_RADIUS = EARTH_RADIUS;
 exports.centroid     = centroid;
 exports.overlaps     = overlaps;
 exports.overlaps_any = overlaps_any;
+exports.bearing      = bearing;
 exports.distance     = distance;
 exports.distance_any = distance_any;
