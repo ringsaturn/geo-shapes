@@ -126,20 +126,20 @@ function overlaps_any(a, bs) {
 }
 
 function bearing(lat_1, lon_1, lat_2, lon_2) {
-  let azi = GeographicLib.Geodesic.WGS84.Inverse(
+  let {azi1} = GeographicLib.Geodesic.WGS84.Inverse(
     lat_1,
     lon_1,
     lat_2,
     lon_2,
     GeographicLib.Geodesic.AZIMUTH
-  ).azi1;
+  );
 
   // GeographicLib returns -180..180, we want 0..360.
-  if(azi < 0) {
-    azi += 360;
+  if(azi1 < 0) {
+    azi1 += 360;
   }
 
-  return azi;
+  return azi1;
 }
 
 function distance(lat_1, lon_1, lat_2, lon_2) {
