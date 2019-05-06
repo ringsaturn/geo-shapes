@@ -4,8 +4,10 @@
   "description": "Utility functions for points and polygons",
   "main": "index.js",
   "scripts": {
-    "lint": "jshint . --exclude node_modules",
-    "test": "NODE_ENV=test istanbul cover _mocha -- $ARGS"
+    "cover": "NODE_ENV=test nyc --reporter=html --reporter=text-summary mocha",
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix .",
+    "test": "npm run lint && npm run cover"
   },
   "repository": {
     "type": "git",
@@ -25,37 +27,16 @@
     "url": "https://github.com/darkskyapp/geo-shapes/issues"
   },
   "homepage": "https://github.com/darkskyapp/geo-shapes#readme",
-  "devDependencies": {
-    "chai": "^3.5.0",
-    "istanbul": "^0.4.5",
-    "jshint": "^2.9.4",
-    "mocha": "^3.4.2"
+  "dependencies": {
+    "geographiclib": "^1.49.0"
   },
-  "jshintConfig": {
-    "esnext": true,
-    "curly": true,
-    "eqeqeq": true,
-    "forin": true,
-    "freeze": true,
-    "immed": true,
-    "indent": 2,
-    "latedef": true,
-    "maxlen": 79,
-    "mocha": true,
-    "newcap": true,
-    "noarg": true,
-    "node": true,
-    "noempty": true,
-    "nonbsp": true,
-    "nonew": true,
-    "predef": [
-      "-Promise"
-    ],
-    "quotmark": "double",
-    "sub": true,
-    "strict": true,
-    "undef": true,
-    "unused": "vars",
-    "varstmt": true
+  "devDependencies": {
+    "@darkskyapp/eslint-config": "^1.1.1",
+    "chai": "^4.2.0",
+    "eslint": "^5.14.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.0.1",
+    "mocha": "^5.2.0",
+    "nyc": "^14.1.0"
   }
 }
