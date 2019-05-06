@@ -1,16 +1,14 @@
 "use strict";
-const DEGREES = 180 / Math.PI;
-const EARTH_RADIUS = 6371008.8;
-const RADIANS = Math.PI / 180;
+const GeographicLib = require("geographiclib");
 
 function centroid(a) {
-  /* Optimization: the centroid of a point is, well, a point; so simply return
-   * it as-is in order to prevent an allocation from being necessary. */
+  // Optimization: the centroid of a point is, well, a point; so simply return
+  // it as-is in order to prevent an allocation from being necessary.
   if(a.length <= 2) {
     return a;
   }
 
-  /* The centroid is merely the average of all the coordinates of a shape. */
+  // The centroid is merely the average of all the coordinates of a shape.
   let x = 0;
   let y = 0;
   let n = 0;
@@ -22,24 +20,23 @@ function centroid(a) {
   return [x, y];
 }
 
-/* Overlap test that works for any combination of points and boxes. */
+// Overlap test that works for any combination of points and boxes.
 function box_box(a, b) {
-  const m = a.length,
-        n = b.length;
-  return a[0] <= b[n - 2] && a[1] <= b[n - 1] &&
-         a[m - 2] >= b[0] && a[m - 1] >= b[1];
+  const m = a.length;
+  const n = b.length;
+  return a[0] <= b[n - 2] && a[1] <= b[n - 1] && a[m - 2] >= b[0] && a[m - 1] >= b[1];
 }
 
-/* A point and a polygon overlap if the point is within the polygon.
- * See: http://paulbourke.net/geometry/polygonmesh/#insidepoly */
+// A point and a polygon overlap if the point is within the polygon.
+// See: http://paulbourke.net/geometry/polygonmesh/#insidepoly
 function polygon_point(a, b) {
-  let contains = false,
-      x1 = a[0],
-      y1 = a[1],
-      x2 = NaN,
-      y2 = NaN;
-  const x = b[0],
-        y = b[1];
+  let contains = false;
+  let x1 = a[0];
+  let y1 = a[1];
+  let x2 = NaN;
+  let y2 = NaN;
+  const x = b[0];
+  const y = b[1];
 
   for(let i = a.length; i; ) {
     y2 = y1;
@@ -58,31 +55,31 @@ function polygon_point(a, b) {
 }
 
 function polygon_polygon(a, b) {
-  /* A point of B is wholly within A. */
+  // A point of B is wholly within A.
   if(polygon_point(a, b)) {
     return true;
   }
 
-  /* A point of A is wholly within B. */
+  // A point of A is wholly within B.
   if(polygon_point(b, a)) {
     return true;
   }
 
-  /* Any edge of A and B cross. */
-  let ax1 = a[0],
-      ay1 = a[1],
-      ax2 = NaN,
-      ay2 = NaN;
+  // Any edge of A and B cross.
+  let ax1 = a[0];
+  let ay1 = a[1];
+  let ax2 = NaN;
+  let ay2 = NaN;
   for(let i = a.length; i; ) {
     ay2 = ay1;
     ax2 = ax1;
     ay1 = a[--i];
     ax1 = a[--i];
 
-    let bx1 = b[0],
-        by1 = b[1],
-        bx2 = NaN,
-        by2 = NaN;
+    let bx1 = b[0];
+    let by1 = b[1];
+    let bx2 = NaN;
+    let by2 = NaN;
     for(let j = b.length; j; ) {
       by2 = by1;
       bx2 = bx1;
@@ -101,7 +98,7 @@ function polygon_polygon(a, b) {
   return false;
 }
 
-/* We cheese out and convert boxes to polygons and use the poly-poly test. */
+// We cheese out and convert boxes to polygons and use the poly-poly test.
 function polygon_box(a, b) {
   return polygon_polygon(a, [b[0], b[1], b[2], b[1], b[2], b[3], b[1], b[3]]);
 }
@@ -113,10 +110,10 @@ function overlaps(a, b) {
     b = t;
   }
 
-  return (a.length <= 4)? box_box        (a, b):
-         (b.length <= 2)? polygon_point  (a, b):
-         (b.length <= 4)? polygon_box    (a, b):
-                          polygon_polygon(a, b);
+  if(a.length <= 4) { return box_box(a, b); }
+  if(b.length <= 2) { return polygon_point(a, b); }
+  if(b.length <= 4) { return polygon_box(a, b); }
+  return polygon_polygon(a, b);
 }
 
 function overlaps_any(a, bs) {
@@ -128,48 +125,36 @@ function overlaps_any(a, bs) {
   return false;
 }
 
-/* distance + bearing below are sourced from
- * http://www.movable-type.co.uk/scripts/latlong.html */
-function bearing(lat1, lon1, lat2, lon2) {
-  lat1 *= RADIANS;
-  lon1 *= RADIANS;
-  lat2 *= RADIANS;
-  lon2 *= RADIANS;
+function bearing(lat_1, lon_1, lat_2, lon_2) {
+  let {azi1} = GeographicLib.Geodesic.WGS84.Inverse(
+    lat_1,
+    lon_1,
+    lat_2,
+    lon_2,
+    GeographicLib.Geodesic.AZIMUTH
+  );
 
-  const dLon = lon2 - lon1;
+  // GeographicLib returns -180..180, we want 0..360.
+  if(azi1 < 0) {
+    azi1 += 360;
+  }
 
-  return (Math.atan2(
-    Math.sin(dLon) * Math.cos(lat2),
-    Math.cos(lat1) * Math.sin(lat2) -
-      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
-  ) * DEGREES + 360.0) % 360.0;
+  return azi1;
 }
 
 function distance(lat_1, lon_1, lat_2, lon_2) {
-  lat_1 *= RADIANS;
-  lon_1 *= RADIANS;
-  lat_2 *= RADIANS;
-  lon_2 *= RADIANS;
-
-  const dLon = lon_2 - lon_1;
-  const sinDLon = Math.sin(dLon);
-  const cosDLon = Math.cos(dLon);
-  const sinLat1 = Math.sin(lat_1);
-  const cosLat1 = Math.cos(lat_1);
-  const sinLat2 = Math.sin(lat_2);
-  const cosLat2 = Math.cos(lat_2);
-  const a = cosLat2 * sinDLon;
-  const b = cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosDLon;
-
-  return EARTH_RADIUS * Math.atan2(
-    Math.hypot(a, b),
-    sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosDLon
-  );
+  return GeographicLib.Geodesic.WGS84.Inverse(
+    lat_1,
+    lon_1,
+    lat_2,
+    lon_2,
+    GeographicLib.Geodesic.DISTANCE
+  ).s12;
 }
 
 function distance_any(a, bs) {
   const m = centroid(a);
-  let min_dist = EARTH_RADIUS * Math.PI;
+  let min_dist = Infinity;
   for(const b of bs) {
     const n = centroid(b);
     const dist = distance(m[0], m[1], n[0], n[1]);
@@ -180,10 +165,9 @@ function distance_any(a, bs) {
   return min_dist;
 }
 
-exports.EARTH_RADIUS = EARTH_RADIUS;
-exports.centroid     = centroid;
-exports.overlaps     = overlaps;
+exports.centroid = centroid;
+exports.overlaps = overlaps;
 exports.overlaps_any = overlaps_any;
-exports.bearing      = bearing;
-exports.distance     = distance;
+exports.bearing = bearing;
+exports.distance = distance;
 exports.distance_any = distance_any;
