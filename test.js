@@ -163,6 +163,7 @@ describe("geo-shapes", () => {
     it("should be pretty accurate within 100km", () => {
       const e = 0.1; // tenth of a meter
 
+      // examples from https://doi.org/10.5281/zenodo.32156
       for(const [lat_1, lon_1, lat_2, lon_2] of [
         [15.677681639125, 0, 15.678222581773295624, 0.005984798364733239],
         [69.421614441160, 0, 69.419698645243129351, 0.011475042329030949],
