@@ -177,7 +177,7 @@ describe("geo-shapes", () => {
         [44.394383976882, 0, 44.395472393174073264, 0.004561023456183626],
       ]) {
         expect(geoshapes.distance_fast(lat_1, lon_1, lat_2, lon_2)).
-          to.be.closeTo(geoshapes.distance(lat_1, lon_1, lat_2, lon_2), e);
+          to.be.closeTo(geoshapes.distance_accurate(lat_1, lon_1, lat_2, lon_2), e);
       }
     });
   });
