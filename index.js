@@ -142,7 +142,7 @@ function bearing(lat_1, lon_1, lat_2, lon_2) {
   return azi1;
 }
 
-function distance(lat_1, lon_1, lat_2, lon_2) {
+function distance_accurate(lat_1, lon_1, lat_2, lon_2) {
   return GeographicLib.Geodesic.WGS84.Inverse(
     lat_1,
     lon_1,
@@ -170,6 +170,10 @@ function distance_fast(lat_1, lon_1, lat_2, lon_2) {
   return Math.hypot(k_lat * (lat_1 - lat_2), k_lon * (lon_1 - lon_2));
 }
 
+// FIXME: it would be nice for this to be smart and pick distance_fast for
+// small distances and distance_accurate otherwise.
+const distance = distance_accurate;
+
 function distance_any(a, bs) {
   const m = centroid(a);
   let min_dist = Infinity;
@@ -188,6 +192,7 @@ exports.centroid = centroid;
 exports.overlaps = overlaps;
 exports.overlaps_any = overlaps_any;
 exports.bearing = bearing;
-exports.distance = distance;
+exports.distance_accurate = distance_accurate;
 exports.distance_fast = distance_fast;
+exports.distance = distance;
 exports.distance_any = distance_any;
