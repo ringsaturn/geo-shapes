@@ -155,7 +155,7 @@ function distance_accurate(lat_1, lon_1, lat_2, lon_2) {
 // This distance function is _extremely fast_ and accurate assuming you can
 // guarantee that the distance between the two points is less than 475km.
 // https://en.wikipedia.org/wiki/Geographical_distance#Ellipsoidal_Earth_projected_to_a_plane
-function distance_fast(lat_1, lon_1, lat_2, lon_2) {
+function distance_sq_fast(lat_1, lon_1, lat_2, lon_2) {
   // https://en.wikipedia.org/wiki/Chebyshev_polynomials
   const cos_0m = 1;
   const cos_1m = Math.cos((lat_1 + lat_2) * (Math.PI / 360));
@@ -167,12 +167,34 @@ function distance_fast(lat_1, lon_1, lat_2, lon_2) {
   const k_lat = 111132.09 * cos_0m - 566.05 * cos_2m + 1.20 * cos_4m;
   const k_lon = 111415.13 * cos_1m - 94.55 * cos_3m + 0.12 * cos_5m;
 
-  return Math.hypot(k_lat * (lat_1 - lat_2), k_lon * (lon_1 - lon_2));
+  const d_lat = k_lat * (lat_1 - lat_2);
+  const d_lon = k_lon * (lon_1 - lon_2);
+
+  return d_lat * d_lat + d_lon * d_lon;
 }
 
-// FIXME: it would be nice for this to be smart and pick distance_fast for
-// small distances and distance_accurate otherwise.
-const distance = distance_accurate;
+function distance_fast(lat_1, lon_1, lat_2, lon_2) {
+  return Math.sqrt(distance_sq_fast(lat_1, lon_1, lat_2, lon_2));
+}
+
+// The thresholds for this function were selected by hand by looking at the
+// error of the fast distance function over a large number (500k) of test
+// locations and finding the point where the error seemed to exceed 0.1%. I
+// tried to be pretty conservative... it's likely we could push the boundaries
+// a bit further...
+function distance(lat_1, lon_1, lat_2, lon_2) {
+  // The fast distance function has accuracy issues near the poles.
+  if(Math.max(Math.abs(lat_1), Math.abs(lat_2)) < 75) {
+    const t_sq = distance_sq_fast(lat_1, lon_1, lat_2, lon_2);
+
+    // The fast distance function has accuracy issues beyond a certain distance.
+    if(t_sq < (330000 * 330000)) {
+      return Math.sqrt(t_sq);
+    }
+  }
+
+  return distance_accurate(lat_1, lon_1, lat_2, lon_2);
+}
 
 function distance_any(a, bs) {
   const m = centroid(a);
