@@ -182,7 +182,7 @@ function distance_fast(lat_1, lon_1, lat_2, lon_2) {
 
 // Select this function if you don't have specific accuracy or performance
 // needs.
-// 
+//
 // The thresholds for this function were selected by hand by looking at the
 // error of the fast distance function over a large number (500k) of test
 // locations and finding the point where the error seemed to exceed 0.1%. I
