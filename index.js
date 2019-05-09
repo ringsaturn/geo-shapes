@@ -142,6 +142,7 @@ function bearing(lat_1, lon_1, lat_2, lon_2) {
   return azi1;
 }
 
+// Select this function if you want high accuracy (e.g. to the millimeter).
 function distance_accurate(lat_1, lon_1, lat_2, lon_2) {
   return GeographicLib.Geodesic.WGS84.Inverse(
     lat_1,
@@ -152,8 +153,6 @@ function distance_accurate(lat_1, lon_1, lat_2, lon_2) {
   ).s12;
 }
 
-// This distance function is _extremely fast_ and accurate assuming you can
-// guarantee that the distance between the two points is less than 475km.
 // https://en.wikipedia.org/wiki/Geographical_distance#Ellipsoidal_Earth_projected_to_a_plane
 function distance_sq_fast(lat_1, lon_1, lat_2, lon_2) {
   // https://en.wikipedia.org/wiki/Chebyshev_polynomials
@@ -173,10 +172,17 @@ function distance_sq_fast(lat_1, lon_1, lat_2, lon_2) {
   return d_lat * d_lat + d_lon * d_lon;
 }
 
+// Select this function if you want high speed (it's almost ludicrously fast)
+// and if you can guarantee that the distance between the two points is
+// relatively small (< ~475km). Error in that region is proportional to the
+// distance, but is generally quite low (< ~0.2%).
 function distance_fast(lat_1, lon_1, lat_2, lon_2) {
   return Math.sqrt(distance_sq_fast(lat_1, lon_1, lat_2, lon_2));
 }
 
+// Select this function if you don't have specific accuracy or performance
+// needs.
+// 
 // The thresholds for this function were selected by hand by looking at the
 // error of the fast distance function over a large number (500k) of test
 // locations and finding the point where the error seemed to exceed 0.1%. I
