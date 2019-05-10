@@ -191,6 +191,15 @@ function bearing_fast(lat_1, lon_1, lat_2, lon_2) {
   return angle(Math.atan2(...fcc_geometry(lat_1, lon_1, lat_2, lon_2)) * (180 / Math.PI));
 }
 
+function distance_and_bearing_fast(lat_1, lon_1, lat_2, lon_2) {
+  const [d_lon, d_lat] = fcc_geometry(lat_1, lon_1, lat_2, lon_2);
+
+  return {
+    distance: Math.hypot(d_lon, d_lat),
+    bearing: angle(Math.atan2(d_lon, d_lat) * (180 / Math.PI)),
+  };
+}
+
 
 // Select these functions if you don't have specific accuracy or performance
 // needs.
@@ -251,6 +260,7 @@ exports.distance_accurate = distance_accurate;
 exports.bearing_accurate = bearing_accurate;
 exports.distance_fast = distance_fast;
 exports.bearing_fast = bearing_fast;
+exports.distance_and_bearing_fast = distance_and_bearing_fast;
 exports.distance = distance;
 exports.bearing = bearing;
 exports.distance_any = distance_any;
