@@ -125,36 +125,23 @@ function overlaps_any(a, bs) {
   return false;
 }
 
-function bearing(lat_1, lon_1, lat_2, lon_2) {
-  let {azi1} = GeographicLib.Geodesic.WGS84.Inverse(
-    lat_1,
-    lon_1,
-    lat_2,
-    lon_2,
-    GeographicLib.Geodesic.AZIMUTH
-  );
 
-  // GeographicLib returns -180..180, we want 0..360.
-  if(azi1 < 0) {
-    azi1 += 360;
+// Convert -180..180 to 0..360.
+function angle(x) {
+  if(x < 0) {
+    x += 360;
   }
-
-  return azi1;
+  return x;
 }
 
-// Select this function if you want high accuracy (e.g. to the millimeter).
-function distance_accurate(lat_1, lon_1, lat_2, lon_2) {
-  return GeographicLib.Geodesic.WGS84.Inverse(
-    lat_1,
-    lon_1,
-    lat_2,
-    lon_2,
-    GeographicLib.Geodesic.DISTANCE
-  ).s12;
-}
+// https://www.govinfo.gov/content/pkg/CFR-2016-title47-vol4/pdf/CFR-2016-title47-vol4-sec73-208.pdf
+function fcc_geometry(lat_1, lon_1, lat_2, lon_2) {
+  // Cast everything to numbers, just in case.
+  lat_1 = +lat_1;
+  lon_1 = +lon_1;
+  lat_2 = +lat_2;
+  lon_2 = +lon_2;
 
-// https://en.wikipedia.org/wiki/Geographical_distance#Ellipsoidal_Earth_projected_to_a_plane
-function distance_sq_fast(lat_1, lon_1, lat_2, lon_2) {
   // https://en.wikipedia.org/wiki/Chebyshev_polynomials
   const cos_0m = 1;
   const cos_1m = Math.cos((lat_1 + lat_2) * (Math.PI / 360));
@@ -166,21 +153,46 @@ function distance_sq_fast(lat_1, lon_1, lat_2, lon_2) {
   const k_lat = 111132.09 * cos_0m - 566.05 * cos_2m + 1.20 * cos_4m;
   const k_lon = 111415.13 * cos_1m - 94.55 * cos_3m + 0.12 * cos_5m;
 
-  const d_lat = k_lat * (lat_1 - lat_2);
-  const d_lon = k_lon * (lon_1 - lon_2);
-
-  return d_lat * d_lat + d_lon * d_lon;
+  return [k_lon * (lon_2 - lon_1), k_lat * (lat_2 - lat_1)];
 }
 
-// Select this function if you want high speed (it's almost ludicrously fast)
-// and if you can guarantee that the distance between the two points is
+
+// Select these functions if you want high accuracy (e.g. to the millimeter).
+function distance_accurate(lat_1, lon_1, lat_2, lon_2) {
+  return GeographicLib.Geodesic.WGS84.Inverse(
+    lat_1,
+    lon_1,
+    lat_2,
+    lon_2,
+    GeographicLib.Geodesic.DISTANCE
+  ).s12;
+}
+
+function bearing_accurate(lat_1, lon_1, lat_2, lon_2) {
+  return angle(GeographicLib.Geodesic.WGS84.Inverse(
+    lat_1,
+    lon_1,
+    lat_2,
+    lon_2,
+    GeographicLib.Geodesic.AZIMUTH
+  ).azi1);
+}
+
+
+// Select these functions if you want high speed (they're almost ludicrously
+// fast) and if you can guarantee that the distance between the two points is
 // relatively small (< ~475km). Error in that region is proportional to the
 // distance, but is generally quite low (< ~0.2%).
 function distance_fast(lat_1, lon_1, lat_2, lon_2) {
-  return Math.sqrt(distance_sq_fast(lat_1, lon_1, lat_2, lon_2));
+  return Math.hypot(...fcc_geometry(lat_1, lon_1, lat_2, lon_2));
 }
 
-// Select this function if you don't have specific accuracy or performance
+function bearing_fast(lat_1, lon_1, lat_2, lon_2) {
+  return angle(Math.atan2(...fcc_geometry(lat_1, lon_1, lat_2, lon_2)) * (180 / Math.PI));
+}
+
+
+// Select these functions if you don't have specific accuracy or performance
 // needs.
 //
 // The thresholds for this function were selected by hand by looking at the
@@ -191,7 +203,8 @@ function distance_fast(lat_1, lon_1, lat_2, lon_2) {
 function distance(lat_1, lon_1, lat_2, lon_2) {
   // The fast distance function has accuracy issues near the poles.
   if(Math.max(Math.abs(lat_1), Math.abs(lat_2)) < 75) {
-    const t_sq = distance_sq_fast(lat_1, lon_1, lat_2, lon_2);
+    const [d_lon, d_lat] = fcc_geometry(lat_1, lon_1, lat_2, lon_2);
+    const t_sq = d_lon * d_lon + d_lat * d_lat;
 
     // The fast distance function has accuracy issues beyond a certain distance.
     if(t_sq < (330000 * 330000)) {
@@ -200,6 +213,21 @@ function distance(lat_1, lon_1, lat_2, lon_2) {
   }
 
   return distance_accurate(lat_1, lon_1, lat_2, lon_2);
+}
+
+function bearing(lat_1, lon_1, lat_2, lon_2) {
+  // The fast bearing function has accuracy issues near the poles.
+  if(Math.max(Math.abs(lat_1), Math.abs(lat_2)) < 75) {
+    const [d_lon, d_lat] = fcc_geometry(lat_1, lon_1, lat_2, lon_2);
+    const t_sq = d_lon * d_lon + d_lat * d_lat;
+
+    // The fast bearing function has accuracy issues beyond a certain distance.
+    if(t_sq < (330000 * 330000)) {
+      return angle(Math.atan2(d_lon, d_lat) * (180 / Math.PI));
+    }
+  }
+
+  return bearing_accurate(lat_1, lon_1, lat_2, lon_2);
 }
 
 function distance_any(a, bs) {
@@ -219,8 +247,10 @@ exports.EARTH_RADIUS = 6371008.8;
 exports.centroid = centroid;
 exports.overlaps = overlaps;
 exports.overlaps_any = overlaps_any;
-exports.bearing = bearing;
 exports.distance_accurate = distance_accurate;
+exports.bearing_accurate = bearing_accurate;
 exports.distance_fast = distance_fast;
+exports.bearing_fast = bearing_fast;
 exports.distance = distance;
+exports.bearing = bearing;
 exports.distance_any = distance_any;
