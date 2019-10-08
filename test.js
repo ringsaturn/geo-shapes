@@ -193,30 +193,41 @@ describe("geo-shapes", () => {
         ]) {
           const approximate = geo_shapes.geodesy.approximate(lat_1, lon_1, lat_2, lon_2);
           const exact = geo_shapes.geodesy.exact(lat_1, lon_1, lat_2, lon_2);
+          const approximate_sq = geo_shapes.geodesy.distance_sq(lat_1, lon_1, lat_2, lon_2);
 
           expect(approximate.distance).to.be.closeTo(exact.distance, 0.1);
           expect(approximate.azimuth).to.be.closeTo(exact.azimuth, 0.1);
+          expect(approximate_sq).to.be.closeTo(approximate.distance * approximate.distance, 0.1);
         }
       });
     });
 
     describe("exact", () => {
       it("should return the distance between Nashville and LA", () => {
-        expect(geo_shapes.geodesy.exact(36.12, -86.67, 33.94, -118.4, geo_shapes.geodesy.DISTANCE)).
-          to.be.closeTo(2892777, 1);
+        expect(geo_shapes.geodesy.exact(36.12, -86.67, 33.94, -118.4)).
+          to.have.a.property("distance").
+          that.is.closeTo(2892777, 1);
       });
 
       it("should return the distance between the north + south pole", () => {
-        expect(geo_shapes.geodesy.exact(90, 0, -90, 0, geo_shapes.geodesy.DISTANCE)).to.be.closeTo(20003931, 1);
-        expect(geo_shapes.geodesy.exact(0, 0, 0, 180, geo_shapes.geodesy.DISTANCE)).to.be.closeTo(20003931, 1);
+        expect(geo_shapes.geodesy.exact(90, 0, -90, 0)).
+          to.have.a.property("distance").
+          that.is.closeTo(20003931, 1);
+        expect(geo_shapes.geodesy.exact(0, 0, 0, 180)).
+          to.have.a.property("distance").
+          that.is.closeTo(20003931, 1);
       });
 
       it("should give a bearing of ~60 degrees from Baghdad to Osaka", () => {
-        expect(geo_shapes.geodesy.exact(35, 45, 35, 135, geo_shapes.geodesy.AZIMUTH)).to.be.closeTo(60, 1);
+        expect(geo_shapes.geodesy.exact(35, 45, 35, 135)).
+          to.have.a.property("azimuth").
+          that.is.closeTo(60, 1);
       });
 
       it("should give a geodesy.exact of ~300 degrees from Osaka to Baghdad", () => {
-        expect(geo_shapes.geodesy.exact(35, 135, 35, 45, geo_shapes.geodesy.AZIMUTH)).to.be.closeTo(300, 1);
+        expect(geo_shapes.geodesy.exact(35, 135, 35, 45)).
+          to.have.a.property("azimuth").
+          that.is.closeTo(300, 1);
       });
     });
   });
